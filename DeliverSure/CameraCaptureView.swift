@@ -1,9 +1,13 @@
 import SwiftUI
+import CoreLocation
 
 struct CameraCaptureView: View {
     @ObservedObject var store: AppStore
     let delivery: Delivery
     @Environment(\.presentationMode) var presentationMode
+    
+    // Real Sensors
+    @StateObject private var sensorManager = SensorManager()
     
     @State private var isAnalyzing = false
     @State private var showSealedScreen = false
@@ -31,16 +35,21 @@ struct CameraCaptureView: View {
                         Text(Date(), style: .time)
                             .font(.system(size: 14, weight: .bold, design: .monospaced))
                             .foregroundColor(.white)
-                        Text("LAT: 12.9716° N  LON: 77.5946° E")
+                        Text(sensorManager.locationString)
                             .font(.system(size: 10, weight: .medium, design: .monospaced))
                             .foregroundColor(.white.opacity(0.8))
+                        Text(sensorManager.currentActivity.uppercased()) // Motion Status
+                             .font(.system(size: 10, weight: .bold, design: .monospaced))
+                             .foregroundColor(.white.opacity(0.6))
                     }
                     Spacer()
                     HStack(spacing: 4) {
-                        Circle().fill(Color.green).frame(width: 6, height: 6)
-                        Text("GPS STRONG")
+                        Circle()
+                            .fill(gpsColor)
+                            .frame(width: 6, height: 6)
+                        Text(gpsText)
                             .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.green)
+                            .foregroundColor(gpsColor)
                     }
                     .padding(6)
                     .background(Color.black.opacity(0.5))
@@ -92,6 +101,22 @@ struct CameraCaptureView: View {
         .navigationBarHidden(true)
     }
     
+    var gpsColor: Color {
+        switch sensorManager.signalStrength {
+        case .strong: return .green
+        case .moderate: return .orange
+        case .weak: return .red
+        }
+    }
+    
+    var gpsText: String {
+        switch sensorManager.signalStrength {
+        case .strong: return "GPS STRONG"
+        case .moderate: return "GPS WEAK"
+        case .weak: return "NO GPS"
+        }
+    }
+    
     func performCapture() {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
@@ -100,15 +125,17 @@ struct CameraCaptureView: View {
             isAnalyzing = true
         }
         
+        let snapshot = sensorManager.captureSnapshot()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             let proof = Proof(
                 photoId: UUID().uuidString,
-                timestamp: Date(),
-                latitude: 12.9716,
-                longitude: 77.5946,
-                orientation: "Portrait",
-                motionData: "Stable",
-                accuracy: 4.5
+                timestamp: snapshot.timestamp,
+                latitude: snapshot.location?.coordinate.latitude ?? 0.0,
+                longitude: snapshot.location?.coordinate.longitude ?? 0.0,
+                orientation: snapshot.orientation,
+                motionData: snapshot.activity,
+                accuracy: snapshot.accuracy
             )
             
             // Transition: CREATED -> PROOF_COLLECTED
