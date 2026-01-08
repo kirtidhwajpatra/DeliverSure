@@ -31,12 +31,9 @@ struct HomeView: View {
                         // Connectivity Status Card
                         HStack {
                             Image(systemName: store.isOnline ? "wifi" : "wifi.slash")
-                            Text(store.isOnline ? "Online & Syncing" : "Offline Mode Active")
+                            Text(store.isOnline ? "Online & Syncing" : "No Internet Connection")
                                 .font(DSTypography.bodyBold)
                             Spacer()
-                            Toggle("", isOn: $store.isOnline)
-                                .labelsHidden()
-                                .toggleStyle(SwitchToggleStyle(tint: DSColor.success))
                         }
                         .padding()
                         .background(store.isOnline ? DSColor.successBackground : DSColor.warningBackground)
@@ -51,10 +48,15 @@ struct HomeView: View {
                     ScrollView {
                         LazyVStack(spacing: 16) {
                             ForEach(store.deliveries) { delivery in
-                                NavigationLink(destination: DeliveryDetailView(store: store, deliveryId: delivery.id)) {
+                                NavigationLink(
+                                    destination: DeliveryDetailView(store: store, deliveryId: delivery.id),
+                                    tag: delivery.id,
+                                    selection: $store.activeDeliveryId
+                                ) {
                                     DeliveryCard(delivery: delivery)
                                 }
                             }
+
                         }
                         .padding(20)
                     }

@@ -48,7 +48,7 @@ struct ProofSealedView: View {
                     .padding(.bottom, 20)
                 
                 PrimaryButton("Done") {
-                    // Manual dismissal
+                    store.resetNavigation()
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 30)
@@ -56,7 +56,7 @@ struct ProofSealedView: View {
                     if timeRemaining > 0 {
                         timeRemaining -= 1
                     } else {
-                         // Dismiss logic handled by parent or manual action in prototype
+                        store.resetNavigation()
                     }
                 }
             }

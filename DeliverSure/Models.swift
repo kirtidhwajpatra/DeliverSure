@@ -87,3 +87,31 @@ struct Driver: Identifiable {
     let name: String
     let vehicleId: String
 }
+
+// MARK: - Brain Models
+enum ActionType: String, Codable {
+    case captureProof = "CAPTURE_PROOF"
+    case sealDelivery = "SEAL_DELIVERY"
+}
+
+struct DeliveryAction: Identifiable, Codable {
+    let id: UUID
+    let type: ActionType
+    let deliveryId: String
+    let payload: Data? // JSON encoded payload (e.g. Proof)
+    let createdAt: Date
+    var attemptCount: Int
+    var status: String // "PENDING", "PROCESSING", "FAILED_RETRYABLE"
+    
+    static func create(type: ActionType, deliveryId: String, payload: Data? = nil) -> DeliveryAction {
+        return DeliveryAction(
+            id: UUID(),
+            type: type,
+            deliveryId: deliveryId,
+            payload: payload,
+            createdAt: Date(),
+            attemptCount: 0,
+            status: "PENDING"
+        )
+    }
+}
